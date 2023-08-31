@@ -89,3 +89,11 @@ begin
     order by tr_soni;
 end;$$;
 
+"4-array_agg"
+select b.name, array_agg(c.name) categories 
+    from branch_transaction as bt
+         inner join branches as b on b.id = bt.branch_id
+         inner join products as p on p.id = bt.product_id
+         left join categories as c on c.id = p.category_id
+    group by b.name;
+
