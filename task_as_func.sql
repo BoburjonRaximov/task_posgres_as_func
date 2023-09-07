@@ -103,8 +103,8 @@ begin
     set quantity = quantity - amount 
     where branch_id = branch AND product_id = product ;
 
-	INSERT INTO branch_pr_transaction(id, branch_id, product_id, type,quantity,created_at)
-	VALUES((SELECT MAX(id)+1 FROM public.branch_pr_transaction), branch, product, 'minus', amount, current_timestamp); 
+	INSERT INTO branch_pr_transaction(id, branch_id,users_id, product_id, type,quantity,created_at)
+	VALUES((SELECT MAX(id)+1 FROM public.branch_pr_transaction), branch, 4, product, 'minus', amount, current_timestamp); 
     commit;
 	ELSE
 	raise notice 'quantity yetarli emas';
