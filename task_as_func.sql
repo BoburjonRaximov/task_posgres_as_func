@@ -89,6 +89,29 @@ begin
     order by tr_soni;
 end;$$;
 
+"3-procedure"
+create or replace procedure transfer(
+   branch int, 
+   product int,
+   amount int
+)
+language plpgsql    
+as $$
+begin
+   if exists (select from branch_products where quantity > amount) THEN
+    update branch_products 
+    set quantity = quantity - amount 
+    where branch_id = branch AND product_id = product ;
+
+	INSERT INTO branch_pr_transaction(id, branch_id, product_id, type,quantity,created_at)
+	VALUES((SELECT MAX(id)+1 FROM public.branch_pr_transaction), branch, product, 'minus', amount, current_timestamp); 
+    commit;
+	ELSE
+	raise notice 'quantity yetarli emas';
+	end if;
+end;$$;
+
+
 "4-array_agg"
 select b.name, array_agg(c.name) categories 
     from branch_transaction as bt
@@ -96,4 +119,26 @@ select b.name, array_agg(c.name) categories
          inner join products as p on p.id = bt.product_id
          left join categories as c on c.id = p.category_id
     group by b.name;
+
+"5 -function"
+create or replace function top() 
+	returns table (
+		branch_names varchar,
+        category_name int,
+		status text
+	) 
+	language 'plpgsql'
+as $$
+begin
+	return query
+	select p.name, bt.quantity,
+	CASE WHEN bt.quantity <= 50 AND bt.type = 'minus' THEN 'yangi'
+		WHEN bt.quantity > 50 AND bt.quantity <= 100 AND bt.type = 'minus' THEN 'xit'
+		WHEN bt.quantity > 100 AND bt.type = 'minus' THEN 'top'
+		ELSE 'Sotilmagan'
+	END yangi_xit_top
+	from branch_pr_transaction as bt
+	inner join products as p on p.id = bt.product_id
+	group by p.name, bt.quantity, bt.type;
+end;$$;
 
